@@ -30,6 +30,14 @@ module Minitest
 
       def record(test)
         super
+
+        return if options[:only_failures] && test.passed?
+
+        if options[:only_failures] && !@current_suite_printed
+          puts @current_suite
+          @current_suite_printed = true
+        end
+
         print pad_test(test.name)
         print_colored_status(test)
         print(" (%.2fs)" % test.time)
@@ -43,11 +51,20 @@ module Minitest
       protected
 
       def before_suite(suite)
-        puts suite
+        if !options[:only_failures]
+          puts suite
+        else
+          @current_suite = suite
+          @current_suite_printed = false
+        end
       end
 
       def after_suite(suite)
-        puts
+        if !options[:only_failures]
+          puts
+        else
+          @current_suite = nil
+        end
       end
     end
   end
