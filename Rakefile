@@ -10,7 +10,7 @@ end
 rubymine_home = [
   ENV["RUBYMINE_HOME"],
   "../rubymine-contrib/ruby-testing/src/rb/testing/patch/common",
-  "/Applications/RubyMine.app/rb/testing/patch/common",
+  "/Applications/RubyMine.app/Contents/rb/testing/patch/common",
 ].compact.detect { |d| Dir.exist?(d) }
 
 Rake::TestTask.new("test:gallery") do |t|
@@ -34,7 +34,9 @@ task :gallery do
     "ProgressReporter",
     "RubyMateReporter",
     "SpecReporter",
-    "RubyMineReporter"
+    "RubyMineReporter",
+    "HtmlReporter",
+    "MeanTimeReporter",
   ].each do |reporter|
     puts
     puts "-" * 72
@@ -48,4 +50,11 @@ task :gallery do
     end
     sh "cat test/reports/*" if reporter == "JUnitReporter"
   end
+end
+
+task :reset_statistics do
+  require 'minitest/reporters/mean_time_reporter'
+  Minitest::Reporters::MeanTimeReporter.reset_statistics!
+  puts "The mean time reporter statistics have been reset."
+  exit 0
 end

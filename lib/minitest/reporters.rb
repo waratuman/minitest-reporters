@@ -7,6 +7,7 @@ module Minitest
   module Reporters
     require "minitest/reporters/version"
 
+    autoload :ANSI, "minitest/reporters/ansi"
     autoload :BaseReporter, "minitest/reporters/base_reporter"
     autoload :DefaultReporter, "minitest/reporters/default_reporter"
     autoload :SpecReporter, "minitest/reporters/spec_reporter"
@@ -14,14 +15,19 @@ module Minitest
     autoload :RubyMateReporter, "minitest/reporters/ruby_mate_reporter"
     autoload :RubyMineReporter, "minitest/reporters/rubymine_reporter"
     autoload :JUnitReporter, "minitest/reporters/junit_reporter"
+    autoload :HtmlReporter, "minitest/reporters/html_reporter"
+    autoload :MeanTimeReporter, "minitest/reporters/mean_time_reporter"
 
     class << self
       attr_accessor :reporters
     end
 
-    def self.use!(console_reporters = ProgressReporter.new, env = ENV, backtrace_filter = ExtensibleBacktraceFilter.default_filter)
+    def self.use!(console_reporters = ProgressReporter.new, env = ENV, backtrace_filter = nil)
       use_runner!(console_reporters, env)
-      Minitest.backtrace_filter = backtrace_filter
+      if backtrace_filter.nil? && !defined?(::Rails)
+        backtrace_filter = ExtensibleBacktraceFilter.default_filter
+      end
+      Minitest.backtrace_filter = backtrace_filter unless backtrace_filter.nil?
 
       unless defined?(@@loaded)
         use_around_test_hooks!
@@ -37,7 +43,7 @@ module Minitest
     def self.use_around_test_hooks!
       Minitest::Test.class_eval do
         def run_with_hooks(*args)
-          if defined?(Minitest::Reporters) && reporters = Minitest::Reporters.reporters
+          if defined?(Minitest::Reporters) && (reporters = Minitest::Reporters.reporters)
             reporters.each { |r| r.before_test(self) }
             result = run_without_hooks(*args)
             reporters.each { |r| r.after_test(self) }
@@ -57,9 +63,21 @@ module Minitest
         [RubyMateReporter.new]
       elsif env["RM_INFO"] || env["TEAMCITY_VERSION"]
         [RubyMineReporter.new]
-      else
+      elsif !env["VIM"]
         Array(console_reporters)
       end
+    end
+
+    def self.clock_time
+      if minitest_version >= 561
+        Minitest.clock_time
+      else
+        Time.now
+      end
+    end
+
+    def self.minitest_version
+      Minitest::VERSION.gsub('.', '').to_i
     end
 
     def self.use_old_activesupport_fix!

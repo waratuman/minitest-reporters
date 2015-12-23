@@ -1,5 +1,3 @@
-require 'ansi/code'
-
 module Minitest
   module Reporters
     # Turn-like reporter that reads like a spec.
@@ -33,14 +31,11 @@ module Minitest
 
         return if options[:only_failures] && test.passed?
 
-        if options[:only_failures] && !@current_suite_printed
-          puts @current_suite
-          @current_suite_printed = true
-        end
+        test_name = test.name.gsub(/^test_: /, 'test:')
+        print pad_test(test_name)
 
-        print pad_test(test.name)
         print_colored_status(test)
-        print(" (%.2fs)" % test.time)
+        print(" (%.2fs)" % test.time) unless test.time.nil?
         puts
         if !test.skipped? && test.failure
           print_info(test.failure)

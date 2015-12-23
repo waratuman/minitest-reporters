@@ -1,4 +1,11 @@
-# minitest-reporters - create customizable Minitest output formats [![Build Status](https://secure.travis-ci.org/kern/minitest-reporters.png)](http://travis-ci.org/kern/minitest-reporters)
+[gem]: https://rubygems.org/gems/minitest-reporters
+[travis]: https://travis-ci.org/kern/minitest-reporters
+
+# minitest-reporters - create customizable Minitest output formats
+
+[![Join the chat at https://gitter.im/kern/minitest-reporters](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/kern/minitest-reporters?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gem Version](https://badge.fury.io/rb/minitest-reporters.svg)][gem]
+[![Build Status](https://secure.travis-ci.org/kern/minitest-reporters.png)][travis]
 
 Death to haphazard monkey-patching! Extend Minitest through simple hooks.
 
@@ -38,6 +45,7 @@ Minitest::Reporters::ProgressReporter # => Fuubar-like output with a progress ba
 Minitest::Reporters::RubyMateReporter # => Simple reporter designed for RubyMate
 Minitest::Reporters::RubyMineReporter # => Reporter designed for RubyMine IDE and TeamCity CI server
 Minitest::Reporters::JUnitReporter    # => JUnit test reporter designed for JetBrains TeamCity
+Minitest::Reporters::MeanTimeReporter # => Produces a report summary showing the slowest running tests
 ```
 
 Options can be passed to these reporters at construction-time, e.g. to force
@@ -84,7 +92,7 @@ do this in `test_helper.rb`:
       Minitest.backtrace_filter
     )
 
-The third parameter to `.new`, in this case `Minitest.backtrace_filter`, should be a
+The third parameter to `.use!`, in this case `Minitest.backtrace_filter`, should be a
 filter object. In the above example, you're telling minitest-reporters to use the filter
 that Rails has already set.
 
@@ -99,7 +107,7 @@ that Rails has already set.
 ## Resources ##
 
 * [GitHub Repository](https://github.com/CapnKernul/minitest-reporters)
-* [Documentation](http://rubydoc.info/github/CapnKernul/minitest-reporters)
+* [Documentation](http://www.rubydoc.info/github/kern/minitest-reporters/master)
 
 ## License ##
 

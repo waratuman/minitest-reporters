@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 require 'ansi/code'
+=======
+>>>>>>> kern/master
 require 'ruby-progressbar'
 
 module Minitest
@@ -41,12 +44,13 @@ module Minitest
 
       def record(test)
         super
-        if (test.skipped? && @detailed_skip) || test.failure
+        return if test.skipped? && !@detailed_skip
+        if test.failure
           print "\e[0m\e[1000D\e[K"
           print_colored_status(test)
           print_test_with_time(test)
           puts
-          print_info(test.failure, test.error?) if test.failure
+          print_info(test.failure, test.error?)
           puts
         end
 
@@ -66,7 +70,8 @@ module Minitest
         puts
         puts('Finished in %.5fs' % total_time)
         print('%d tests, %d assertions, ' % [count, assertions])
-        print(red { '%d failures, %d errors, ' } % [failures, errors])
+        color = failures.zero? && errors.zero? ? :green : :red
+        print(send(color) { '%d failures, %d errors, ' } % [failures, errors])
         print(yellow { '%d skips' } % skips)
         puts
       end

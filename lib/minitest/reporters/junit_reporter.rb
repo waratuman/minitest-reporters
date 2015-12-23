@@ -1,4 +1,3 @@
-require 'ansi/code'
 require 'builder'
 require 'fileutils'
 module Minitest
@@ -10,9 +9,10 @@ module Minitest
     # Also inspired by Marc Seeger's attempt at producing a JUnitReporter (see https://github.com/rb2k/minitest-reporters/commit/e13d95b5f884453a9c77f62bc5cba3fa1df30ef5)
     # Also inspired by minitest-ci (see https://github.com/bhenderson/minitest-ci)
     class JUnitReporter < BaseReporter
-      def initialize(reports_dir = "test/reports", empty = true)
+      def initialize(reports_dir = "test/reports", empty = true, options = {})
         super({})
         @reports_path = File.absolute_path(reports_dir)
+        @single_file = options[:single_file]
 
         if empty
           puts "Emptying #{@reports_path}"
@@ -27,26 +27,35 @@ module Minitest
         puts "Writing XML reports to #{@reports_path}"
         suites = tests.group_by(&:class)
 
-        suites.each do |suite, tests|
-          suite_result = analyze_suite(tests)
-
-          xml = Builder::XmlMarkup.new(:indent => 2)
-          xml.instruct!
-          xml.testsuite(:name => suite, :skipped => suite_result[:skip_count], :failures => suite_result[:fail_count],
-                        :errors => suite_result[:error_count], :tests => suite_result[:test_count],
-                        :assertions => suite_result[:assertion_count], :time => suite_result[:time]) do
-            tests.each do |test|
-              xml.testcase(:name => test.name, :classname => suite, :assertions => test.assertions,
-                           :time => test.time) do
-                xml << xml_message_for(test) unless test.passed?
-              end
-            end
+        if @single_file
+          write_xml_file_for("minitest", tests.group_by(&:class).values.flatten)
+        else
+          suites.each do |suite, tests|
+            write_xml_file_for(suite, tests)
           end
-          File.open(filename_for(suite), "w") { |file| file << xml.target! }
         end
+
       end
 
       private
+
+      def write_xml_file_for(suite, tests)
+        suite_result = analyze_suite(tests)
+
+        xml = Builder::XmlMarkup.new(:indent => 2)
+        xml.instruct!
+        xml.testsuite(:name => suite, :skipped => suite_result[:skip_count], :failures => suite_result[:fail_count],
+                      :errors => suite_result[:error_count], :tests => suite_result[:test_count],
+                      :assertions => suite_result[:assertion_count], :time => suite_result[:time]) do
+          tests.each do |test|
+            xml.testcase(:name => test.name, :classname => suite, :assertions => test.assertions,
+                         :time => test.time) do
+              xml << xml_message_for(test) unless test.passed?
+            end
+          end
+        end
+        File.open(filename_for(suite), "w") { |file| file << xml.target! }
+      end
 
       def xml_message_for(test)
         # This is a trick lifted from ci_reporter
@@ -109,10 +118,11 @@ module Minitest
 
       def filename_for(suite)
         file_counter = 0
-        filename = "TEST-#{suite.to_s[0..240].gsub(/[^a-zA-Z0-9]+/, '-')}.xml" #restrict max filename length, to be kind to filesystems
+        suite_name = suite.to_s[0..240].gsub(/[^a-zA-Z0-9]+/, '-') # restrict max filename length, to be kind to filesystems
+        filename = "TEST-#{suite_name}.xml"
         while File.exists?(File.join(@reports_path, filename)) # restrict number of tries, to avoid infinite loops
           file_counter += 1
-          filename = "TEST-#{suite}-#{file_counter}.xml"
+          filename = "TEST-#{suite_name}-#{file_counter}.xml"
           puts "Too many duplicate files, overwriting earlier report #{filename}" and break if file_counter >= 99
         end
         File.join(@reports_path, filename)
